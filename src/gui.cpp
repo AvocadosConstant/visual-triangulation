@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             // Apply compression with triangulation
             case COMPRESS:
                 orig.copyTo(clone);
-                std::cout << "Enter a positive or negative integer size:" << std::endl;
+                std::cout << "Enter a positive integer size:" << std::endl;
                 std::cin >> size;
                 if (size - 1 >= 2) compress(clone, size, color);
                 break;
