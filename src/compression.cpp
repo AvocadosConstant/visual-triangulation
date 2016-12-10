@@ -11,10 +11,11 @@
 
 /**
  * Compresses the image using triangulation.
- * @param m    the image matrix to work with
- * @param size the triangle size
+ * @param m     the image matrix to work with
+ * @param size  the triangle size
+ * @param color whether to work with grayscale or color
  */
-void compress(cv::Mat &m, const int size) {
+void compress(cv::Mat &m, const int size, const int color) {
     // Make copy of original
     cv::Mat copy = m.clone();
 
@@ -22,38 +23,66 @@ void compress(cv::Mat &m, const int size) {
     for (int i = 0; i < (copy.rows - (copy.rows % size)); i += size) {
         for (int j = 0; j < (copy.cols - (copy.cols % size)); j += size) {
             double sum = 0.0;
+            double sumColor[3] = { 0.0 };
             int count = 0;
             // Get average color in top left triangular region
             for (int k = 0; k < size; k++) {
                 for (int l = 0; l < size - k - 1; l++) {
-                    sum += (int)copy.at<uchar>(i + k, j + l);
+                    if (color) {
+                        for (int n = 0; n < 3; n++) sumColor[n] += (int)copy.at<cv::Vec3b>(i + k, j + l)[n];
+                    } else {
+                        sum += (int)copy.at<uchar>(i + k, j + l);
+                    }
                     count++;
                 }
             }
-            int avg = std::round(sum / count);
+            int avgColor[3] = { 0 };
+            int avg = 0;
+            if (color) {
+                for (int n = 0; n < 2; n++) avgColor[n] = std::round(sumColor[n] / count);
+            } else {
+                avg = std::round(sum / count);
+            }
 
             // Recolor top left triangular region
             for (int k = 0; k < size; k++) {
                 for (int l = 0; l < size - k - 1; l++) {
-                    copy.at<uchar>(i + k, j + l) = avg;
+                    if (color) {
+                        copy.at<cv::Vec3b>(i + k, j + l) = cv::Vec3b(avgColor[0], avgColor[1], avgColor[2]);
+                    } else {
+                        copy.at<uchar>(i + k, j + l) = avg;
+                    }
                 }
             }
 
             sum = 0.0;
+            std::fill(sumColor, sumColor + 3, 0.0);
             count = 0;
             // Get average color in bottom right triangular region
             for (int k = size - 1; k >= 0; k--) {
                 for (int l = size - 1; l >= size - k - 1; l--) {
-                    sum += (int)copy.at<uchar>(i + k, j + l);
+                    if (color) {
+                        for (int n = 0; n < 3; n++) sumColor[n] += (int)copy.at<cv::Vec3b>(i + k, j + l)[n];
+                    } else {
+                        sum += (int)copy.at<uchar>(i + k, j + l);
+                    }
                     count++;
                 }
             }
-            avg = std::round(sum / count);
+            if (color) {
+                for (int n = 0; n < 2; n++) avgColor[n] = std::round(sumColor[n] / count);
+            } else {
+                avg = std::round(sum / count);
+            }
 
             // Recolor bottom right triangular region
             for (int k = size - 1; k >= 0; k--) {
                 for (int l = size - 1; l >= size - k - 1; l--) {
-                    copy.at<uchar>(i + k, j + l) = avg;
+                    if (color) {
+                        copy.at<cv::Vec3b>(i + k, j + l) = cv::Vec3b(avgColor[0], avgColor[1], avgColor[2]);
+                    } else {
+                        copy.at<uchar>(i + k, j + l) = avg;
+                    }
                 }
             }
         }
@@ -69,7 +98,7 @@ void compress(cv::Mat &m, const int size) {
  * @param size     the triangle size for which to save in the .cs455 file
  * @param filename the filename to use as a prefix when exporting the images
  */
-void exportImage(cv::Mat &m, const int size, std::string filename) {
+void exportImage(cv::Mat &m, const int size, const int color, std::string filename) {
     std::ofstream file;
 
     // Save .jpg file with max quality
@@ -90,8 +119,13 @@ void exportImage(cv::Mat &m, const int size, std::string filename) {
     // Traverse across image and save region intensities to binary file
     for (int i = 0; i < m.rows; i += size) {
         for (int j = 0; j < m.cols; j += size) {
-            file.write(reinterpret_cast<char*>(&m.at<uchar>(i, j)), sizeof(uchar));
-            file.write(reinterpret_cast<char*>(&m.at<uchar>(i + size - 1, j + size - 1)), sizeof(uchar));
+            if (color) {
+                file.write((char *)(&m.at<cv::Vec3b>(i, j)), sizeof(cv::Vec3b));
+                file.write((char *)(&m.at<cv::Vec3b>(i + size - 1, j + size - 1)), sizeof(cv::Vec3b));
+            } else {
+                file.write(reinterpret_cast<char*>(&m.at<uchar>(i, j)), sizeof(uchar));
+                file.write(reinterpret_cast<char*>(&m.at<uchar>(i + size - 1, j + size - 1)), sizeof(uchar));
+            }
         }
     }
     file.close();
@@ -102,13 +136,14 @@ void exportImage(cv::Mat &m, const int size, std::string filename) {
  * @param m        the image matrix to work with
  * @param filename the filename for which to import the image
  */
-void importImage(cv::Mat &m, std::string filename) {
+void importImage(cv::Mat &m, const int color, std::string filename) {
     std::ifstream file;
     file.open(filename, std::ios::in | std::ios::binary);
     if (!file) ERROR_EXIT("Error importing file: could not open file for reading");
 
     int rows, cols, size;
     uchar color1, color2;
+    cv::Vec3b colorV1, colorV2;
 
     // Write file width, height, and region size to binary file
     file.read((char*)&rows, sizeof(int));
@@ -116,7 +151,12 @@ void importImage(cv::Mat &m, std::string filename) {
     file.read((char*)&size, sizeof(int));
 
     // Work with a draft matrix
-    cv::Mat copy(rows, cols, CV_8U);
+    cv::Mat copy;
+    if (color) {
+        copy = cv::Mat(rows, cols, CV_8UC3);
+    } else {
+        copy = cv::Mat(rows, cols, CV_8U);
+    }
     copy.setTo(cv::Scalar::all(0));
 
     // Traverse across image and save region intensities to binary file
@@ -126,20 +166,33 @@ void importImage(cv::Mat &m, std::string filename) {
                 file.close();
                 return;
             }
-            file.read((char*)&color1, sizeof(uchar));
-            file.read((char*)&color2, sizeof(uchar));
+            if (color) {
+                file.read((char*)&colorV1, sizeof(cv::Vec3b));
+                file.read((char*)&colorV2, sizeof(cv::Vec3b));
+            } else {
+                file.read((char*)&color1, sizeof(uchar));
+                file.read((char*)&color2, sizeof(uchar));
+            }
 
             // Recolor top left triangular region
             for (int k = 0; k < size && i + k < copy.rows; k++) {
                 for (int l = 0; l < size - k - 1 && j + l < copy.cols; l++) {
-                    copy.at<uchar>(i + k, j + l) = color1;
+                    if (color) {
+                        copy.at<cv::Vec3b>(i + k, j + l) = colorV1;
+                    } else {
+                        copy.at<uchar>(i + k, j + l) = color1;
+                    }
                 }
             }
 
             // Recolor bottom right triangular region
             for (int k = size - 1; k >= 0 && i + k < copy.rows; k--) {
                 for (int l = size - 1; l >= size - k - 1 && j + l < copy.cols; l--) {
-                    copy.at<uchar>(i + k, j + l) = color2;
+                    if (color) {
+                        copy.at<cv::Vec3b>(i + k, j + l) = colorV2;
+                    } else {
+                        copy.at<uchar>(i + k, j + l) = color2;
+                    }
                 }
             }
         }

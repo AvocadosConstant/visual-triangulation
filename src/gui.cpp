@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
     // Import image if .cs455 extension detected
     if (filename.substr(idx + 1) == "cs455") {
-        importImage(orig, filename);
+        importImage(orig, color, filename);
     } else {
         filename = filename.substr(0, idx);
         // CV_LOAD_IMAGE_GRAYSCALE = 0, CV_LOAD_IMAGE_COLOR > 0
@@ -48,9 +48,7 @@ int main(int argc, char **argv) {
     bool running = true;
 
     // Set up size variable for compression
-    int size = 5;
-
-    char response;
+    int size = 0;
     cv::namedWindow(mainWindowTitle);
 
     while (running) {
@@ -67,20 +65,13 @@ int main(int argc, char **argv) {
                 break;
             // Apply compression with triangulation
             case COMPRESS:
-                response = cvWaitKey(WAIT_TIME * 1000);
-                if (response == 'u') {
-                    orig.copyTo(clone);
-                    size += 75;
-                    compress(clone, size);
-                } else if (response == 'd') {
-                    orig.copyTo(clone);
-                    size -= 25;
-                    if (size - 1 >= 2) compress(clone, size);
-                } else if (response == ' ') {
-                    exportImage(clone, size, filename);
-                } else {
-                    ERROR_CONT("Incorrect key pressed for compression using triangulation");
-                }
+                orig.copyTo(clone);
+                std::cout << "Enter a positive or negative integer size:" << std::endl;
+                std::cin >> size;
+                if (size - 1 >= 2) compress(clone, size, color);
+                break;
+            case EXPORT:
+                exportImage(clone, size, color, filename);
                 break;
         }
     }

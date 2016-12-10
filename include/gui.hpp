@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-void compress(cv::Mat &m, const int size);
-void exportImage(cv::Mat &m, const int size, std::string filename);
-void importImage(cv::Mat &m, std::string filename);
+void compress(cv::Mat &m, const int size, const int color);
+void exportImage(cv::Mat &m, const int size, const int color, std::string filename);
+void importImage(cv::Mat &m, const int color, std::string filename);
 
 #endif
