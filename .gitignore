@@ -1,3 +1,6 @@
+# Prerequisites
+*.d
+
 # Compiled Object files
 *.slo
 *.lo
@@ -27,3 +30,14 @@
 *.exe
 *.out
 *.app
+gui
+
+# Exclude folders
+build
+images
+
+# Exclude dist folders
+*.zip
+*.tar
+*.tar.gz
+
