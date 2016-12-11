@@ -68,24 +68,41 @@ cv::Point2i find_centroid(const std::vector<cv::Point2i>& points) {
     return retPt;
 }
 
+double cross(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3) {
+    double sum1 = p1.x*p2.y + p2.x*p3.y + p3.x*p1.y;
+    double sum2 = p2.x*p1.y + p3.x*p2.y + p1.x*p3.y;
+    return (sum1 + sum2) / 2;
+}
+
 bool LOP(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3, const cv::Point2i& p4) {
-    long dummy = point_dist(p3, p2) * point_dist(p2, p1);
-    long sin_a = (p3.x - p2.x) * (p1.y - p2.y) - (p1.x - p2.x) * (p3.y - p2.y);
-    sin_a = (dummy != 0) ? (sin_a/dummy) : 1000000;
+    double sin_a = (p3.x - p2.x) * (p1.y - p2.y) - (p1.x - p2.x) * (p3.y - p2.y);
+    double sin_b = (p1.x - p4.x) * (p3.y - p4.y) - (p3.x - p4.x) * (p1.y - p4.y);
+    double cos_a = (p3.x - p2.x) * (p1.x - p2.x) + (p3.y - p2.y) * (p1.y - p2.y);
+    double cos_b = (p1.x - p4.x) * (p3.x - p4.x) + (p1.y - p4.y) * (p3.y - p4.y);
+    //if(p1 == cv::Point2i(175, 116) && p3 == cv::Point2i(4, 95)) {
+        //std::cout << "Got the fucker." << std::endl;
+        //std::cout << "sin_a: " << sin_a << std::endl;
+        //std::cout << "sin_b: " << sin_b << std::endl;
+        //std::cout << "cos_a: " << cos_a << std::endl;
+        //std::cout << "cos_b: " << cos_b << std::endl;
+        //std::cout << "SUM: " << (cos_a * sin_b + sin_a * cos_b) << std::endl;
 
-    long sin_b = (p1.x - p4.x) * (p3.y - p4.y) - (p3.x - p4.x) * (p1.y - p4.y);
-    dummy = point_dist(p4, p1) * point_dist(p4, p3);
-    sin_b = (dummy != 0) ? (sin_b/dummy) : 1000000;
+    //}
 
-    long cos_a = (p3.x - p2.x) * (p1.x - p2.x) + (p3.y - p2.y) * (p1.y - p2.y);
-    dummy = point_dist(p2, p3) * point_dist(p2, p1);
-    cos_a = (dummy != 0) ? (cos_a/dummy) : 1000000;
+    if(cos_a < 0 && cos_b < 0) return true;
+    if(cos_a > 0 && cos_b > 0) return false;
+    if(cos_a * sin_b + sin_a * cos_b < 0 ||
+            -1*cos_a*sin_b + -1*sin_a*cos_b < 0) return true;
+    return false;
+    //double old_area1 = cross(p1, p2, p3);
+    //double old_area2 = cross(p1, p4, p3);
+    //double new_area1 = cross(p2, p1, p4);
+    //double new_area2 = cross(p2, p3, p4);
 
-    long cos_b = (p1.x - p4.x) * (p3.x - p4.x) + (p1.y - p4.y) * (p3.y - p4.y);
-    dummy = point_dist(p4, p1) * point_dist(p4, p3);
-    cos_b = (dummy != 0) ? (cos_b/dummy) : 1000000;
+    //if(old_area1 > old_area2) std::swap(old_area1, old_area2);
+    //if(new_area1 > new_area2) std::swap(new_area1, new_area2);
 
-    return ((cos_a < 0 && cos_b < 0) || (cos_a * sin_b + sin_a * cos_b < 0));
+    //return (old_area1/old_area2) < (new_area1/new_area2);
 }
 
 namespace tri {
@@ -132,6 +149,15 @@ namespace tri {
             return retVal;
         };
 
+        // Function for swapping edges in LOP
+        auto seg_swap = [&adj_map](cv::Point2i p1, cv::Point2i p2, cv::Point2i p3, cv::Point2i p4) {
+            auto& v1 = adj_map[p1]; auto& v2 = adj_map[p2];
+            adj_map[p1].erase(std::find(v1.begin(), v1.end(), p2));
+            adj_map[p2].erase(std::find(v2.begin(), v2.end(), p1));
+            adj_map[p3].push_back(p4);
+            adj_map[p4].push_back(p3);
+        };
+
         // Draw lines from centroid to outer points
         std::vector<cv::Point2i>& centroid_adj_list = adj_map[centroid];
         for(auto p : points) {
@@ -140,7 +166,9 @@ namespace tri {
             adj_map[p].push_back(centroid);
         }
 
+        // Order points
         std::sort(points.begin(), points.end(), compare_pts);
+
         // Connect lines in clockwise fashion
         for(std::size_t i = 2; i < points.size(); ++i) {
             segments.emplace_back(points[i-1], points[i]);
@@ -165,34 +193,45 @@ namespace tri {
             }
         }
 
-        // LOP - Local Optimization Procedure
-        for(auto s : segments) {
-            auto p1 = std::get<0>(s);
-            auto p2 = std::get<1>(s);
+        std::cout << "Centroid: " << centroid << std::endl;
 
-            // Find two other points to complete quadrilateral
-            cv::Point2i others[2];
-            int num_found = 0;
-            auto& vec = adj_map[p2];
-            for(auto p : adj_map[p1]) {
-                if(num_found == 2) break;
-                if(p != p2) {
-                    auto result = std::find(vec.begin(), vec.end(), p);
-                    if(result != vec.end()) others[num_found++] = *result;
+        bool edgeFlip = true;
+        // LOP - Local Optimization Procedure
+        for(int iter = 0; iter < 7; ++iter) {
+        //while(edgeFlip) {
+            edgeFlip = false;
+            for(auto& s : segments) {
+                auto p1 = std::get<0>(s);
+                auto p2 = std::get<1>(s);
+
+                // Find two other points to complete quadrilateral
+                cv::Point2i others[2];
+                std::vector<cv::Point2i> shared_pts;
+                int num_found = 0;
+                auto& vec = adj_map[p2];
+                for(auto p : adj_map[p1]) {
+                    if(num_found == 2) break;
+                    if(p != p2) {
+                        auto result = std::find(vec.begin(), vec.end(), p);
+                        if(result != vec.end()) others[num_found++] = *result;
+                    }
+                }
+
+                // Flip edge according to LOP
+                if(num_found == 2 && (LOP(p1, others[0], p2, others[1]))) {
+                            //LOP(p1, others[1], p2, others[0]))) {
+                    auto &other_vec = adj_map[others[0]];
+                    auto result = std::find(other_vec.begin(), other_vec.end(), others[1]);
+                    if(result == other_vec.end()) {
+                        if(!edgeFlip) edgeFlip = true;
+                        std::cout << "Flipping " << p1 << "," << p2 << " to " << others[0] << "," << others[1] << std::endl;
+                        seg_swap(p1, p2, others[0], others[1]);
+                        s = std::make_pair(others[0], others[1]);
+                    }
                 }
             }
-
-            // Swap according to LOP
-            if(num_found == 2 && LOP(p1, others[0], p2, others[1])) {
-                auto& v1 = adj_map[p1];
-                auto& v2 = adj_map[p2];
-                adj_map[p1].erase(std::find(v1.begin(), v1.end(), p2));
-                adj_map[p2].erase(std::find(v2.begin(), v2.end(), p1));
-                segments.emplace_back(others[0], others[1]);
-                adj_map[others[0]].push_back(others[1]);
-                adj_map[others[1]].push_back(others[0]);
-                segments.erase(std::find(segments.begin(), segments.end(), s));
-            }
+            std::cout << "End of " << iter << std::endl;
+            //std::cout << "End" << std::endl;
         }
 
         return segments;

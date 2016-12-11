@@ -61,6 +61,12 @@ int main(int argc, char** argv) {
                 segments = std::move(tri::radial(workingImg, points));
                 workingImg = draw_img(segments, workingImg.size());
                 break;
+            case '3':
+                cv::circle(workingImg, cv::Point2i(208,19), 1, cv::Scalar(0,255,0), 2);
+                cv::circle(workingImg, cv::Point2i(118,99), 1, cv::Scalar(0,255,0), 2);
+                //cv::circle(workingImg, cv::Point2i(225,23), 1, cv::Scalar(255,0,0), 2);
+                //cv::circle(workingImg, cv::Point2i(144,192), 1, cv::Scalar(255,0,0), 2);
+                break;
             case 'C': // Convert to color
                 if(isGray) {
                     cv::cvtColor(workingImg, workingImg, CV_GRAY2BGR);
