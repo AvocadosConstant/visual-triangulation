@@ -1,0 +1,8 @@
+# Pictures
+*.jpg
+*.bmp
+
+# CPP
+*.gch
+*.o
+final
