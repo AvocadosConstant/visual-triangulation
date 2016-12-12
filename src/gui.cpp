@@ -34,6 +34,8 @@ int main(int argc, char **argv) {
   if (color >= 0) orig = cv::imread(argv[2], color);
   clone = orig.clone();
 
+
+  int size = 0;
   cv::namedWindow(mainWindowTitle);
 
   std::vector<cv::Point2f> corners;
