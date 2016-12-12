@@ -33,12 +33,13 @@ int main(int argc, char **argv) {
     // Import image if .cs455 extension detected
     if (filename.substr(idx + 1) == "cs455") {
         importImage(orig, color, filename);
+        orig.copyTo(clone);
     } else {
         filename = filename.substr(0, idx);
         // CV_LOAD_IMAGE_GRAYSCALE = 0, CV_LOAD_IMAGE_COLOR > 0
         if (color >= 0) orig = cv::imread(argv[2], color);
+        clone = orig.clone();
     }
-    clone = orig.clone();
 
     /**
      * Gui consistently monitors for key presses
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
     cv::namedWindow(mainWindowTitle);
 
     while (running) {
-        cv::imshow(mainWindowTitle, clone);
+        cv::imshow(mainWindowTitle, orig);
         char key = cvWaitKey(WAIT_TIME);
         switch (key) {
             // Quit gui
