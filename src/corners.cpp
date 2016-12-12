@@ -5,11 +5,11 @@
 
 cv::Mat draw_points(cv::Mat image, std::vector<cv::Point2f> points, int radius) {
   for( int i = 0; i < points.size(); i++ ) {
-    cv::circle( 
+    cv::circle(
       image, points[i], radius, cv::Scalar(
         255, 255, 255
-      ), -1, 8, 0 
-    ); 
+      ), -1, 8, 0
+    );
   }
   return image;
 }
@@ -25,7 +25,7 @@ std::vector<cv::Point2f> detect_corners_random_edge(cv::Mat image, int maxCorner
 
   for (int i = 0; i < image.cols; i++ ) {
     for (int j = 0; j < image.rows; j++) {
-      if (image.at<uchar>(j, i) >0) {   
+      if (image.at<uchar>(j, i) >0) {
         corners.push_back(cv::Point2f(i, j));
       }
     }
@@ -54,7 +54,7 @@ std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat image, int maxCorners
   double k = 0.04;
 
   // Shi-Tomasi Corner Detection
-  cv::goodFeaturesToTrack( 
+  cv::goodFeaturesToTrack(
       image,
       corners,
       maxCorners - 4,

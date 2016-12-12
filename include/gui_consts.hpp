@@ -13,6 +13,8 @@
 #define WAIT_TIME   10
 #define ESCAPE      27
 #define SPACE       ' '
+#define COMPRESS    'c'
+#define EXPORT      'e'
 
 /**
  * 8-bit image, range: 0-255

@@ -8,7 +8,6 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <opencv2/core.hpp>
 
 /**
  * Note: OpenCV is used only for loading and saving the image.
@@ -48,9 +47,19 @@ int main(int argc, char **argv) {
       case ESCAPE:
         running = false;
         break;
-        // Reset to original image
+      // Reset to original image
       case SPACE:
         orig.copyTo(clone);
+        break;
+      // Apply compression with triangulation
+      case COMPRESS:
+        orig.copyTo(clone);
+        std::cout << "Enter a positive integer size:" << std::endl;
+        std::cin >> size;
+        if (size - 1 >= 2) compress(clone, size, color);
+        break;
+      case EXPORT:
+        exportImage(clone, size, color, filename);
         break;
       case 'r':
         corners = detect_corners_random_edge(clone, 500);
