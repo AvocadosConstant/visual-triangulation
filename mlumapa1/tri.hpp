@@ -5,25 +5,27 @@
 #include <vector>
 #include <utility>
 
-using segment_list = std::vector<std::pair<cv::Point2i, cv::Point2i>>;
-using _triangle = std::tuple<cv::Point2i, cv::Point2i, cv::Point2i>;
+using _Point = cv::Point2f;
+using segment_list = std::vector<std::pair<_Point, _Point>>;
+using _triangle = std::tuple<_Point, _Point, _Point>;
 
 cv::Mat canny(const cv::Mat& img);
-std::vector<cv::Point2i> gen_points(const cv::Mat& img, unsigned numPts);
+std::vector<_Point> gen_points(const cv::Mat& img, unsigned numPts);
 cv::Mat draw_img(const segment_list&, cv::Size size);
-long point_dist(const cv::Point2i& a, const cv::Point2i& b);
-cv::Point2i find_centroid(const std::vector<cv::Point2i>& points);
-double cross(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3);
-
+cv::Mat draw_img(const std::vector<_Point>& points, const cv::Size size);
+long point_dist(const _Point& a, const _Point& b);
+_Point find_centroid(const std::vector<_Point>& points);
+double cross(const _Point& p1, const _Point& p2, const _Point& p3);
+inline double area_tri(const _triangle&);
 // Returns the opposite of what LOP actually returns
 // Utilizes circumcircle test for swap
-bool LOP(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3, const cv::Point2i& p4);
-cv::Point2i get_unique(const _triangle& t, cv::Point2i p1, cv::Point2i p2);
+bool LOP(const _Point& p1, const _Point& p2, const _Point& p3, const _Point& p4);
+_Point get_unique(const _triangle& t, _Point p1, _Point p2);
 
 /* Triangulation */
 namespace tri {
-    void basic_alg(cv::Mat& img, std::vector<cv::Point2i>& points);
-    segment_list radial(const cv::Mat& img, std::vector<cv::Point2i>& points);
+    void basic_alg(cv::Mat& img, std::vector<_Point>& points);
+    segment_list radial(const cv::Mat& img, std::vector<_Point>& points);
 }
 
 #endif /* FINAL_HPP */
