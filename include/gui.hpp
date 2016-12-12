@@ -8,4 +8,7 @@
 #include <utility>
 #include <vector>
 
+cv::Mat draw_points(cv::Mat, std::vector<cv::Point2f>, int);
+std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat, int);
+
 #endif
