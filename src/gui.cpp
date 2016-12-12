@@ -30,9 +30,6 @@ int main(int argc, char **argv) {
   std::string filename(argv[2]);
   size_t idx = filename.find_last_of(".");
 
-  filename = filename.substr(0, idx);
-  if (color >= 0) orig = cv::imread(argv[2], color);
-
   // Import image if .cs455 extension detected
   if (filename.substr(idx + 1) == "cs455") {
       importImage(orig, color, filename);
