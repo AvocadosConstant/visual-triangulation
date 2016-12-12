@@ -62,10 +62,12 @@ int main(int argc, char** argv) {
                 workingImg = draw_img(segments, workingImg.size());
                 break;
             case '3':
-                cv::circle(workingImg, cv::Point2i(208,19), 1, cv::Scalar(0,255,0), 2);
-                cv::circle(workingImg, cv::Point2i(118,99), 1, cv::Scalar(0,255,0), 2);
-                //cv::circle(workingImg, cv::Point2i(225,23), 1, cv::Scalar(255,0,0), 2);
-                //cv::circle(workingImg, cv::Point2i(144,192), 1, cv::Scalar(255,0,0), 2);
+                cv::circle(workingImg, cv::Point2i(175,116), 1, cv::Scalar(255,0,0), 2);
+                cv::circle(workingImg, cv::Point2i(110,205), 1, cv::Scalar(0,255,0), 2);
+                cv::circle(workingImg, cv::Point2i(66,198), 1, cv::Scalar(0,255,0), 2);
+                cv::circle(workingImg, cv::Point2i(4,95), 1, cv::Scalar(0,255,0), 2);
+                cv::circle(workingImg, cv::Point2i(144,192), 1, cv::Scalar(0,0,255), 2);
+                //cv::circle(workingImg, cv::Point2i(144,192), 1, cv::Scalar(0,0,255), 2);
                 break;
             case 'C': // Convert to color
                 if(isGray) {

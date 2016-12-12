@@ -6,11 +6,15 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <tuple>
 #include <random>
 #include <unordered_map>
 #include <vector>
 
-using segment_list = std::vector<std::pair<cv::Point2i, cv::Point2i>>;
+using _segment = std::pair<cv::Point2i, cv::Point2i>;
+using segment_list = std::vector<_segment>;
+using _triangle = std::tuple<cv::Point2i, cv::Point2i, cv::Point2i>;
+using triangle_list = std::vector<_triangle>;
 
 cv::Mat canny(const cv::Mat& img) {
     cv::Mat dummy;
@@ -79,16 +83,6 @@ bool LOP(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3, co
     double sin_b = (p1.x - p4.x) * (p3.y - p4.y) - (p3.x - p4.x) * (p1.y - p4.y);
     double cos_a = (p3.x - p2.x) * (p1.x - p2.x) + (p3.y - p2.y) * (p1.y - p2.y);
     double cos_b = (p1.x - p4.x) * (p3.x - p4.x) + (p1.y - p4.y) * (p3.y - p4.y);
-    //if(p1 == cv::Point2i(175, 116) && p3 == cv::Point2i(4, 95)) {
-        //std::cout << "Got the fucker." << std::endl;
-        //std::cout << "sin_a: " << sin_a << std::endl;
-        //std::cout << "sin_b: " << sin_b << std::endl;
-        //std::cout << "cos_a: " << cos_a << std::endl;
-        //std::cout << "cos_b: " << cos_b << std::endl;
-        //std::cout << "SUM: " << (cos_a * sin_b + sin_a * cos_b) << std::endl;
-
-    //}
-
     if(cos_a < 0 && cos_b < 0) return true;
     if(cos_a > 0 && cos_b > 0) return false;
     if(cos_a * sin_b + sin_a * cos_b < 0 ||
@@ -105,6 +99,15 @@ bool LOP(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3, co
     //return (old_area1/old_area2) < (new_area1/new_area2);
 }
 
+cv::Point2i get_unique(const _triangle& t, cv::Point2i p1, cv::Point2i p2) {
+    auto p = std::get<0>(t);
+    if(p != p1 && p != p2) return p;
+    p = std::get<1>(t);
+    if(p != p1 && p != p2) return p;
+    p = std::get<2>(t);
+    return p;
+}
+
 namespace tri {
     void basic_alg(cv::Mat& img, std::vector<cv::Point2i>& points) {
         // Fill
@@ -113,10 +116,29 @@ namespace tri {
     /* Radial sweep */
     segment_list radial(const cv::Mat& img, std::vector<cv::Point2i>& points) {
         segment_list segments;
+
+        /* Hashing function for points */
         std::function<unsigned long(cv::Point2i)> point_hasher = [](cv::Point2i p) -> unsigned long {
-            return (53 + std::hash<int>{}(p.x)) * 53 + std::hash<int>{}(p.y);
+            return (53 + std::hash<unsigned long>{}(p.x)) * 53 + std::hash<unsigned long>{}(p.y);
         };
+
+        /* Hashing function for segments */
+        auto seg_hasher = [&point_hasher](const _segment s) -> unsigned long {
+            return 53 + point_hasher(std::get<0>(s)) * point_hasher(std::get<1>(s));
+        };
+
+        /* Equality function for segments */
+        auto seg_tri_eq = [](const _segment& s1, const _segment& s2) {
+            auto s1_1 = std::get<0>(s1); auto s1_2 = std::get<1>(s1);
+            auto s2_1 = std::get<0>(s2); auto s2_2 = std::get<1>(s2);
+            return (s1_1 == s2_1 && s1_2 == s2_2) || (s1_1 == s2_2 && s1_2 == s2_1);
+        };
+
+        /* Adjacency list (using a map) */
         std::unordered_map<cv::Point2i, std::vector<cv::Point2i>, decltype(point_hasher)> adj_map(points.size(), point_hasher);
+
+        /* Triangle list (bound to each segment) */
+        std::unordered_map<_segment, triangle_list, decltype(seg_hasher), decltype(seg_tri_eq)> tri_map(points.size()*2/3, seg_hasher, seg_tri_eq);
 
         for(auto p : points) adj_map.emplace(p, std::vector<cv::Point2i>());
 
@@ -152,10 +174,24 @@ namespace tri {
         // Function for swapping edges in LOP
         auto seg_swap = [&adj_map](cv::Point2i p1, cv::Point2i p2, cv::Point2i p3, cv::Point2i p4) {
             auto& v1 = adj_map[p1]; auto& v2 = adj_map[p2];
-            adj_map[p1].erase(std::find(v1.begin(), v1.end(), p2));
-            adj_map[p2].erase(std::find(v2.begin(), v2.end(), p1));
+            std::remove(v1.begin(), v1.end(), p2);
+            std::remove(v2.begin(), v2.end(), p1);
             adj_map[p3].push_back(p4);
             adj_map[p4].push_back(p3);
+        };
+
+        auto insert_tri_map = [&tri_map](const cv::Point2i p1, const cv::Point2i p2, const cv::Point2i p3) {
+            tri_map[_segment(p1,p2)].emplace_back(p1,p2,p3);
+            tri_map[_segment(p2,p3)].emplace_back(p1,p2,p3);
+            tri_map[_segment(p1,p3)].emplace_back(p1,p2,p3);
+        };
+
+        auto remove_tri = [&tri_map](const _triangle& t, const cv::Point2i p1, const cv::Point2i p2) {
+            auto& m = tri_map[_segment(p1,p2)];
+            //std::cout << "Size before: " << m.size() << std::endl;
+            std::remove(m.begin(), m.end(), t);
+            //std::cout << "Removing triangle: " << std::get<0>(t) << "," << std::get<1>(t) << "," << std::get<2>(t) << " from " << p1 << "," << p2 << std::endl;
+            //std::cout << "Size after: " << m.size() << std::endl;
         };
 
         // Draw lines from centroid to outer points
@@ -169,16 +205,19 @@ namespace tri {
         // Order points
         std::sort(points.begin(), points.end(), compare_pts);
 
+
         // Connect lines in clockwise fashion
         for(std::size_t i = 2; i < points.size(); ++i) {
             segments.emplace_back(points[i-1], points[i]);
             adj_map[points[i-1]].push_back(points[i]);
             adj_map[points[i]].push_back(points[i-1]);
+            insert_tri_map(centroid, points[i-1], points[i]);
         }
 
         segments.emplace_back(points.back(), points[1]);
         adj_map[points.back()].push_back(points[1]);
         adj_map[points[1]].push_back(points.back());
+        insert_tri_map(centroid, points[1], points.back());
 
         // Make all boundaries convex edges
         for(std::size_t i = 3; i < points.size(); ++i) {
@@ -190,44 +229,44 @@ namespace tri {
                 segments.emplace_back(points[i-2], points[i]);
                 adj_map[points[i-2]].push_back(points[i]);
                 adj_map[points[i]].push_back(points[i-2]);
+                insert_tri_map(points[i-2], points[i-1], points[i]);
             }
         }
 
         std::cout << "Centroid: " << centroid << std::endl;
 
         bool edgeFlip = true;
+        //int nuum = 0;
         // LOP - Local Optimization Procedure
-        for(int iter = 0; iter < 7; ++iter) {
+        for(int iter = 0; iter < 4; ++iter) {
         //while(edgeFlip) {
             edgeFlip = false;
             for(auto& s : segments) {
+                if(tri_map[s].size() != 2) continue;
+                //if(nuum == 4) break;
                 auto p1 = std::get<0>(s);
                 auto p2 = std::get<1>(s);
+                auto t1 = tri_map[s].at(0);
+                auto t2 = tri_map[s].at(1);
 
-                // Find two other points to complete quadrilateral
-                cv::Point2i others[2];
-                std::vector<cv::Point2i> shared_pts;
-                int num_found = 0;
-                auto& vec = adj_map[p2];
-                for(auto p : adj_map[p1]) {
-                    if(num_found == 2) break;
-                    if(p != p2) {
-                        auto result = std::find(vec.begin(), vec.end(), p);
-                        if(result != vec.end()) others[num_found++] = *result;
-                    }
-                }
+                auto p3 = get_unique(t1, p1, p2);
+                auto p4 = get_unique(t2, p1, p2);
 
-                // Flip edge according to LOP
-                if(num_found == 2 && (LOP(p1, others[0], p2, others[1]))) {
-                            //LOP(p1, others[1], p2, others[0]))) {
-                    auto &other_vec = adj_map[others[0]];
-                    auto result = std::find(other_vec.begin(), other_vec.end(), others[1]);
-                    if(result == other_vec.end()) {
-                        if(!edgeFlip) edgeFlip = true;
-                        std::cout << "Flipping " << p1 << "," << p2 << " to " << others[0] << "," << others[1] << std::endl;
-                        seg_swap(p1, p2, others[0], others[1]);
-                        s = std::make_pair(others[0], others[1]);
-                    }
+                // Flip edge according to LOP and check if valid diagonal
+                if(LOP(p1, p3, p2, p4) && tri_map[_segment(p3,p4)].size() == 0) {
+                    //nuum++;
+                    if(!edgeFlip) edgeFlip = true;
+                    std::cout << "Flipping " << p1 << "," << p2
+                        << " to " << p3 << "," << p4 << std::endl;
+                    tri_map[s].clear();
+                    remove_tri(t1, p1, p3);
+                    remove_tri(t1, p2, p3);
+                    remove_tri(t2, p1, p4);
+                    remove_tri(t2, p2, p4);
+                    seg_swap(p1, p2, p3, p4);
+                    s = std::make_pair(p3, p4);
+                    insert_tri_map(p3, p1, p4);
+                    insert_tri_map(p3, p2, p4);
                 }
             }
             std::cout << "End of " << iter << std::endl;

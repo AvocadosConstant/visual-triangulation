@@ -6,6 +6,7 @@
 #include <utility>
 
 using segment_list = std::vector<std::pair<cv::Point2i, cv::Point2i>>;
+using _triangle = std::tuple<cv::Point2i, cv::Point2i, cv::Point2i>;
 
 cv::Mat canny(const cv::Mat& img);
 std::vector<cv::Point2i> gen_points(const cv::Mat& img, unsigned numPts);
@@ -17,6 +18,7 @@ double cross(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3
 // Returns the opposite of what LOP actually returns
 // Utilizes circumcircle test for swap
 bool LOP(const cv::Point2i& p1, const cv::Point2i& p2, const cv::Point2i& p3, const cv::Point2i& p4);
+cv::Point2i get_unique(const _triangle& t, cv::Point2i p1, cv::Point2i p2);
 
 /* Triangulation */
 namespace tri {
