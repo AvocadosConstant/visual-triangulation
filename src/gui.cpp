@@ -32,8 +32,17 @@ int main(int argc, char **argv) {
 
   filename = filename.substr(0, idx);
   if (color >= 0) orig = cv::imread(argv[2], color);
-  clone = orig.clone();
 
+  // Import image if .cs455 extension detected
+  if (filename.substr(idx + 1) == "cs455") {
+      importImage(orig, color, filename);
+      orig.copyTo(clone);
+  } else {
+      filename = filename.substr(0, idx);
+      // CV_LOAD_IMAGE_GRAYSCALE = 0, CV_LOAD_IMAGE_COLOR > 0
+      if (color >= 0) orig = cv::imread(argv[2], color);
+      clone = orig.clone();
+  }
 
   int size = 0;
   cv::namedWindow(mainWindowTitle);
