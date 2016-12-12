@@ -39,7 +39,7 @@ void compress(cv::Mat &m, const int size, const int color) {
             int avgColor[3] = { 0 };
             int avg = 0;
             if (color) {
-                for (int n = 0; n < 2; n++) avgColor[n] = std::round(sumColor[n] / count);
+                for (int n = 0; n < 3; n++) avgColor[n] = std::round(sumColor[n] / count);
             } else {
                 avg = std::round(sum / count);
             }
@@ -70,7 +70,7 @@ void compress(cv::Mat &m, const int size, const int color) {
                 }
             }
             if (color) {
-                for (int n = 0; n < 2; n++) avgColor[n] = std::round(sumColor[n] / count);
+                for (int n = 0; n < 3; n++) avgColor[n] = std::round(sumColor[n] / count);
             } else {
                 avg = std::round(sum / count);
             }
