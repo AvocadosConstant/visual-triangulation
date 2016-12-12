@@ -35,10 +35,11 @@ int main(int argc, char **argv) {
   if (color >= 0) orig = cv::imread(argv[2], color);
   clone = orig.clone();
 
-  bool running = true;
-
   cv::namedWindow(mainWindowTitle);
 
+  std::vector<cv::Point2f> corners;
+
+  bool running = true;
   while (running) {
     cv::imshow(mainWindowTitle, clone);
     char key = cvWaitKey(WAIT_TIME);
@@ -51,8 +52,14 @@ int main(int argc, char **argv) {
       case SPACE:
         orig.copyTo(clone);
         break;
+      case 'r':
+        corners = detect_corners_random_edge(clone, 500);
+        orig.copyTo(clone);
+        clone = draw_points(clone, corners, 6);
+        break;
       case 's':
-        std::vector<cv::Point2f> corners = detect_corners_shi_tomasi(clone, 500);
+        corners = detect_corners_shi_tomasi(clone, 500);
+        orig.copyTo(clone);
         clone = draw_points(clone, corners, 6);
         break;
     }

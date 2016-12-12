@@ -14,8 +14,37 @@ cv::Mat draw_points(cv::Mat image, std::vector<cv::Point2f> points, int radius) 
   return image;
 }
 
+std::vector<cv::Point2f> detect_corners_random_edge(cv::Mat image, int maxCorners) {
+  // Reduce noise with a kernel 3x3
+  cv::blur(image, image, cv::Size(3,3));
+
+  /// Canny detector
+  cv::Canny(image, image, 160, 200, 3);
+
+  std::vector<cv::Point2f> corners;
+
+  for (int i = 0; i < image.cols; i++ ) {
+    for (int j = 0; j < image.rows; j++) {
+      if (image.at<uchar>(j, i) >0) {   
+        corners.push_back(cv::Point2f(i, j));
+      }
+    }
+  }
+  std::random_shuffle(corners.begin(), corners.end());
+  corners = std::vector<cv::Point2f>(corners.begin(), corners.begin() + maxCorners - 4);
+
+  // Push 4 real corners of image
+  corners.push_back(cv::Point2f(0,0));
+  corners.push_back(cv::Point2f(image.cols, 0));
+  corners.push_back(cv::Point2f(0, image.rows));
+  corners.push_back(cv::Point2f(image.cols, image.rows));
+
+  return corners;
+}
+
 std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat image, int maxCorners) {
-  if( maxCorners < 1 ) { maxCorners = 1; }
+  // Make sure maxCorners is positive
+  maxCorners = (maxCorners < 1) ? 1 : maxCorners;
 
   std::vector<cv::Point2f> corners;
   double qualityLevel = 0.01;
@@ -28,7 +57,7 @@ std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat image, int maxCorners
   cv::goodFeaturesToTrack( 
       image,
       corners,
-      maxCorners,
+      maxCorners - 4,
       qualityLevel,
       minDistance,
       cv::Mat(),
@@ -42,6 +71,5 @@ std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat image, int maxCorners
   corners.push_back(cv::Point2f(0, image.rows));
   corners.push_back(cv::Point2f(image.cols, image.rows));
 
-  std::cout<<"Number of corners detected: "<<corners.size()<<std::endl;
   return corners;
 }
