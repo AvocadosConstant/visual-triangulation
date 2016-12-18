@@ -1,3 +1,4 @@
+#include "tri.hpp"
 #include "gui.hpp"
 #include "gui_consts.hpp"
 #include <iostream>
@@ -15,6 +16,17 @@
  * Once the image is read in, we work with the pixels and
  * other characteristics of the image directly.
  */
+
+//void fill_boundaries(std::vector<cv::Point2f>& corners, const cv::Mat& img) {
+    //for(int i = 0; i < img.cols; i += 25) {
+        //corners.emplace_back(0,i);
+        //corners.emplace_back(img.rows-1,i);
+    //}
+    //for(int i = 0; i < img.rows; i += 25) {
+        //corners.emplace_back(i,0);
+        //corners.emplace_back(i,img.cols-1);
+    //}
+//}
 
 int main(int argc, char **argv) {
   // Argument checks
@@ -35,9 +47,11 @@ int main(int argc, char **argv) {
   if (color >= 0) orig = cv::imread(argv[2], color);
   clone = orig.clone();
 
-  cv::namedWindow(mainWindowTitle);
+  cv::namedWindow(mainWindowTitle, cv::WINDOW_NORMAL);
 
   std::vector<cv::Point2f> corners;
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> lines;
+  std::string save_name;
 
   bool running = true;
   while (running) {
@@ -48,19 +62,31 @@ int main(int argc, char **argv) {
       case ESCAPE:
         running = false;
         break;
+      case 'q':
+        running = false;
+        break;
         // Reset to original image
       case SPACE:
         orig.copyTo(clone);
         break;
       case 'r':
         corners = detect_corners_random_edge(clone, 500);
+        //fill_boundaries(corners, clone);
         orig.copyTo(clone);
-        clone = draw_points(clone, corners, 6);
+        //clone = draw_points(clone, corners, 6);
+        clone = draw_img(tri::radial(corners), clone);
         break;
       case 's':
         corners = detect_corners_shi_tomasi(clone, 500);
         orig.copyTo(clone);
-        clone = draw_points(clone, corners, 6);
+        //clone = draw_points(clone, corners, 6);
+        clone = draw_img(tri::radial(corners), clone);
+        break;
+      case 'S': // Save the image with a filename
+        std::cout << "Enter a name to save the file > ";
+        std::cin >> save_name;
+        imwrite(save_name + ".jpg", clone);
+        std::cout << "File successfully written to " + save_name + ".jpg" << std::endl;
         break;
     }
   }
