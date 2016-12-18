@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
     }
     else img = prompt_filename();
     cv::Mat workingImg = img.clone();
+    cv::Mat pointImg;
     cv::namedWindow("Original", cv::WINDOW_NORMAL);
     std::vector<cv::Point2f> points;
     segment_list segments;
@@ -57,11 +58,14 @@ int main(int argc, char** argv) {
                 workingImg = canny(img);
                 break;
             case '2':
-                points = gen_points(workingImg, 10);
-                segments = std::move(tri::radial(workingImg, points));
-                workingImg = draw_img(segments, workingImg.size());
+                points = gen_points(workingImg, 500);
+                pointImg = draw_img(points, workingImg.size());
+                workingImg = pointImg;
                 break;
             case '3':
+                //segments = std::move(tri::radial(points));
+                segments = tri::basic_alg(points);
+                workingImg = draw_img(segments, pointImg);
                 //cv::circle(workingImg, cv::Point2i(175,116), 1, cv::Scalar(255,0,0), 2);
                 //cv::circle(workingImg, cv::Point2i(110,205), 1, cv::Scalar(0,255,0), 2);
                 //cv::circle(workingImg, cv::Point2i(66,198), 1, cv::Scalar(0,255,0), 2);
@@ -71,6 +75,10 @@ int main(int argc, char** argv) {
                 break;
             case '4':
                 workingImg = draw_img(gen_points(workingImg, 600), workingImg.size());
+                break;
+            case '5':
+                segments = tri::radial(points);
+                workingImg = draw_img(segments, workingImg);
                 break;
             case 'C': // Convert to color
                 if(isGray) {
