@@ -4,7 +4,7 @@
 #include <iomanip>
 
 cv::Mat draw_points(cv::Mat image, std::vector<cv::Point2f> points, int radius) {
-  for( int i = 0; i < points.size(); i++ ) {
+  for( std::size_t i = 0; i < points.size(); i++ ) {
     cv::circle(
       image, points[i], radius, cv::Scalar(
         255, 255, 255
@@ -34,10 +34,10 @@ std::vector<cv::Point2f> detect_corners_random_edge(cv::Mat image, int maxCorner
   corners = std::vector<cv::Point2f>(corners.begin(), corners.begin() + maxCorners - 4);
 
   // Push 4 real corners of image
-  //corners.push_back(cv::Point2f(0,0));
-  //corners.push_back(cv::Point2f(image.cols, 0));
-  //corners.push_back(cv::Point2f(0, image.rows));
-  //corners.push_back(cv::Point2f(image.cols, image.rows));
+  corners.push_back(cv::Point2f(0,0));
+  corners.push_back(cv::Point2f(image.cols, 0));
+  corners.push_back(cv::Point2f(0, image.rows));
+  corners.push_back(cv::Point2f(image.cols, image.rows));
 
   return corners;
 }
@@ -65,11 +65,10 @@ std::vector<cv::Point2f> detect_corners_shi_tomasi(cv::Mat image, int maxCorners
       useHarrisDetector,
       k );
 
-  // Push 4 real corners of image
-  //corners.push_back(cv::Point2f(0,0));
-  //corners.push_back(cv::Point2f(image.cols, 0));
-  //corners.push_back(cv::Point2f(0, image.rows));
-  //corners.push_back(cv::Point2f(image.cols, image.rows));
+  // Push 4 real corners of image corners.push_back(cv::Point2f(0,0));
+  corners.push_back(cv::Point2f(image.cols, 0));
+  corners.push_back(cv::Point2f(0, image.rows));
+  corners.push_back(cv::Point2f(image.cols, image.rows));
 
   return corners;
 }

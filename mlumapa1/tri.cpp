@@ -354,7 +354,7 @@ namespace tri {
         bool edgeFlip = true;
         //int nuum = 0;
          //LOP - Local Optimization Procedure
-        for(int iter = 0; iter < 100; ++iter) {
+        for(int iter = 0; iter < 101; ++iter) {
         //while(edgeFlip) {
             edgeFlip = false;
             for(auto& s : segments) {
@@ -368,18 +368,9 @@ namespace tri {
                 auto p3 = get_unique(t1, p1, p2);
                 auto p4 = get_unique(t2, p1, p2);
 
-
                 // Flip edge according to LOP and check if valid diagonal
-                //if(LOP(p1, p3, p2, p4) && tri_map[_segment(p3,p4)].size() == 0 &&
-                       //(area_tri(t1)+area_tri(t2) == cross(p3,p1,p4)+cross(p3,p2,p4))) {
-
-                //if(LOP(p1, p3, p2, p4) && tri_map[_segment(p3,p4)].size() == 0) {
                 if(LOP(p1, p3, p2, p4) && (area_tri(t1)+area_tri(t2) == area_tri(p3,p1,p4)+area_tri(p3,p2,p4))) {
-                    //nuum++;
-                    //std::cout << "Orig area: " << (area_tri(t1) + area_tri(t2)) << std::endl;
-                    //std::cout << "New area: " << (cross(p3,p1,p4) + cross(p3,p2,p4)) << std::endl;
                     if(!edgeFlip) edgeFlip = true;
-                    //std::cout << "Flipping " << p1 << "," << p2
                         //<< " to " << p3 << "," << p4 << std::endl;
                     tri_map[s].clear();
                     remove_tri(t1, p1, p3);
@@ -392,8 +383,6 @@ namespace tri {
                     insert_tri_map(p3, p2, p4);
                 }
             }
-            //std::cout << "End of " << iter << std::endl;
-            //std::cout << "End" << std::endl;
         }
 
         return segments;

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
                 workingImg = canny(img);
                 break;
             case '2':
-                points = gen_points(workingImg, 500);
+                points = gen_points(workingImg, 10);
                 pointImg = draw_img(points, workingImg.size());
                 workingImg = pointImg;
                 break;

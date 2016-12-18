@@ -10,8 +10,6 @@ using segment_list = std::vector<std::pair<_Point, _Point>>;
 using _triangle = std::tuple<_Point, _Point, _Point>;
 
 /* Unrelated to triangulation */
-cv::Mat canny(const cv::Mat& img);
-std::vector<_Point> gen_points(const cv::Mat& img, unsigned numPts);
 cv::Mat draw_img(const segment_list&, cv::Size size);
 cv::Mat draw_img(const segment_list&, const cv::Mat& img);
 cv::Mat draw_img(const std::vector<_Point>& points, const cv::Size size);
@@ -39,7 +37,6 @@ segment_list compute_hull(const std::vector<_Point>& points);
 
 /* Triangulation */
 namespace tri {
-    segment_list basic_alg(std::vector<_Point>& points);
     segment_list radial(std::vector<_Point>& points);
 }
 

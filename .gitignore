@@ -41,3 +41,6 @@ images
 *.tar
 *.tar.gz
 
+# Exclude swap files
+*.swp
+

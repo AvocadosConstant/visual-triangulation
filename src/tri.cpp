@@ -18,27 +18,6 @@ using segment_list = std::vector<_segment>;
 using _triangle = std::tuple<_Point, _Point, _Point>;
 using triangle_list = std::vector<_triangle>;
 
-cv::Mat canny(const cv::Mat& img) {
-    cv::Mat dummy;
-    double highThresh = cv::threshold(img, dummy, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    cv::Canny(img, dummy, 0.5 * highThresh, highThresh);
-    return dummy.clone();
-}
-
-std::vector<_Point> gen_points(const cv::Mat& img, unsigned numPts) {
-    std::vector<_Point> points;
-    for(int row = 0; row < img.rows; ++row)
-        for(int col = 0; col < img.cols; ++col) {
-            if(img.at<uchar>(row,col) == 255) {
-                points.emplace_back(row, col);
-            }
-        }
-
-    //std::random_device rd;
-    std::shuffle(points.begin(), points.end(), std::mt19937(69));
-    return std::vector<_Point>(points.begin(), points.begin() + numPts);
-}
-
 cv::Mat draw_img(const segment_list& segments, const cv::Size size) {
     cv::Mat img = cv::Mat::zeros(size, CV_8UC1);
     for(auto s : segments) {
@@ -73,7 +52,6 @@ _Point find_centroid(const std::vector<_Point>& points) {
     long x = 0; long y = 0;
     for(auto p : points) { x += p.x; y += p.y; }
     if(points.size() > 0) { x /= points.size(); y /= points.size(); }
-    std::cout << "X: " << x << ", Y: " << y << std::endl;
 
     _Point centroid(x,y);
     _Point retPt;
@@ -194,15 +172,6 @@ segment_list compute_hull(std::vector<_Point>& points) {
 }
 
 namespace tri {
-    segment_list basic_alg(std::vector<_Point>& points) {
-        //segment_list segments;
-        // Get convex hull
-        // Initial triangulation
-        // Inner point insertion
-        // LOP
-        return compute_hull(points);
-    }
-
     /* Radial sweep */
     segment_list radial(std::vector<_Point>& points) {
         segment_list segments;
@@ -270,12 +239,14 @@ namespace tri {
             adj_map[p4].push_back(p3);
         };
 
+        // Function for inserting triangle into tri_map
         auto insert_tri_map = [&tri_map](const _Point p1, const _Point p2, const _Point p3) {
             tri_map[_segment(p1,p2)].emplace_back(p1,p2,p3);
             tri_map[_segment(p2,p3)].emplace_back(p1,p2,p3);
             tri_map[_segment(p1,p3)].emplace_back(p1,p2,p3);
         };
 
+        // Function for checking if two triangles are equal
         auto triang_eq = [](const _triangle& t1, const _triangle& t2) -> bool {
             _Point t1_points[3] = { std::get<0>(t1), std::get<1>(t1), std::get<2>(t1) };
             _Point t2_points[3] = { std::get<0>(t2), std::get<1>(t2), std::get<2>(t2) };
@@ -294,6 +265,7 @@ namespace tri {
             return isEqual;
         };
 
+        // Function for deleting triangles
         auto remove_tri = [&tri_map, &triang_eq](const _triangle& t, const _Point p1, const _Point p2) {
             auto& m = tri_map[_segment(p1,p2)];
             for(auto iter = m.begin(); iter != m.end(); ++iter) {
@@ -349,17 +321,12 @@ namespace tri {
             }
         }
 
-        std::cout << "Centroid: " << centroid << std::endl;
-
         bool edgeFlip = true;
-        //int nuum = 0;
          //LOP - Local Optimization Procedure
-        for(int iter = 0; iter < 100; ++iter) {
-        //while(edgeFlip) {
+        for(int iter = 0; iter < 101; ++iter) {
             edgeFlip = false;
             for(auto& s : segments) {
                 if(tri_map[s].size() != 2) continue;
-                //if(nuum == 4) break;
                 auto p1 = std::get<0>(s);
                 auto p2 = std::get<1>(s);
                 auto t1 = tri_map[s].at(0);
@@ -370,17 +337,8 @@ namespace tri {
 
 
                 // Flip edge according to LOP and check if valid diagonal
-                //if(LOP(p1, p3, p2, p4) && tri_map[_segment(p3,p4)].size() == 0 &&
-                       //(area_tri(t1)+area_tri(t2) == cross(p3,p1,p4)+cross(p3,p2,p4))) {
-
-                //if(LOP(p1, p3, p2, p4) && tri_map[_segment(p3,p4)].size() == 0) {
                 if(LOP(p1, p3, p2, p4) && (area_tri(t1)+area_tri(t2) == area_tri(p3,p1,p4)+area_tri(p3,p2,p4))) {
-                    //nuum++;
-                    //std::cout << "Orig area: " << (area_tri(t1) + area_tri(t2)) << std::endl;
-                    //std::cout << "New area: " << (cross(p3,p1,p4) + cross(p3,p2,p4)) << std::endl;
                     if(!edgeFlip) edgeFlip = true;
-                    //std::cout << "Flipping " << p1 << "," << p2
-                        //<< " to " << p3 << "," << p4 << std::endl;
                     tri_map[s].clear();
                     remove_tri(t1, p1, p3);
                     remove_tri(t1, p2, p3);
@@ -392,8 +350,6 @@ namespace tri {
                     insert_tri_map(p3, p2, p4);
                 }
             }
-            //std::cout << "End of " << iter << std::endl;
-            //std::cout << "End" << std::endl;
         }
 
         return segments;

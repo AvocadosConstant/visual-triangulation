@@ -1,5 +1,31 @@
 # CS 455 Term Project
 
+## Requirements
+
+Must have OpenCV 3+ and g++ version with at least C++11 support.
+
+## How to Run
+
+Compile the program first by running 'make',
+Then run './gui <0,1> <path-to-image>' where 0 indicates that
+the image should be opened as a grayscale and 1 indicates that the image
+should be opened in color (RGB). For point generation and triangulation, please
+open in the image in grayscale (option 0).
+
+The following are useful/relevant commands:
+
+ESC .......... quit the program
+SPACE ........ reset the image
+e ............ export the image
+r ............ generate random points on an image from its edges
+s ............ generate random points on an image with Shi-Tomasi detection
+t ............ triangulate points on image (only run after running 'r' or 's')
+1 ............ triangulate points on an image from random points of its edges
+2 ............ triangulate points on an image from Shi-Tomasi detection points
+
+Note: '1' and '2' are just 'r' and 's' combined with 't'. The difference is that
+'1' and '2' do not produce circles generated from 'r' and 's'.
+
 ## Corner Detection
 
 To calculate strong seed points for our triangulations, we propose the technique of corner detection.
@@ -8,9 +34,11 @@ To calculate strong seed points for our triangulations, we propose the technique
 
 ### The Procedure
 
-We will utilize Harris-Stephens corner detection.
+We will utilize Harris-Stephens and Shi-Tomasi corner detection.
 
-### Future Applications
+## Delaunay Triangulation
+
+We use radial sweep as the algorithm of choice for generating Delaunay triangulations.
 
 ## Compression
 

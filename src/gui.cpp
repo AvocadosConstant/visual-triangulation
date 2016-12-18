@@ -16,17 +16,6 @@
  * other characteristics of the image directly.
  */
 
-//void fill_boundaries(std::vector<cv::Point2f>& corners, const cv::Mat& img) {
-    //for(int i = 0; i < img.cols; i += 25) {
-        //corners.emplace_back(0,i);
-        //corners.emplace_back(img.rows-1,i);
-    //}
-    //for(int i = 0; i < img.rows; i += 25) {
-        //corners.emplace_back(i,0);
-        //corners.emplace_back(i,img.cols-1);
-    //}
-//}
-
 int main(int argc, char **argv) {
   // Argument checks
   if (argc != 3) ERROR_EXIT("Usage: ./gui <0 (read in as grayscale) or 1 (read in as color)> <path-to-image>");
@@ -85,22 +74,26 @@ int main(int argc, char **argv) {
         break;
       case 'r':
         corners = detect_corners_random_edge(clone, 500);
-        //fill_boundaries(corners, clone);
         orig.copyTo(clone);
-        //clone = draw_points(clone, corners, 6);
-        clone = draw_img(tri::radial(corners), clone);
+        clone = draw_points(clone, corners, 6);
         break;
       case 's':
         corners = detect_corners_shi_tomasi(clone, 500);
         orig.copyTo(clone);
-        //clone = draw_points(clone, corners, 6);
+        clone = draw_points(clone, corners, 6);
+        break;
+      case 't':
         clone = draw_img(tri::radial(corners), clone);
         break;
-      case 'S': // Save the image with a filename
-        std::cout << "Enter a name to save the file > ";
-        std::cin >> save_name;
-        imwrite(save_name + ".jpg", clone);
-        std::cout << "File successfully written to " + save_name + ".jpg" << std::endl;
+      case '1':
+        corners = detect_corners_random_edge(clone, 500);
+        orig.copyTo(clone);
+        clone = draw_img(tri::radial(corners), clone);
+        break;
+      case '2':
+        corners = detect_corners_shi_tomasi(clone, 500);
+        orig.copyTo(clone);
+        clone = draw_img(tri::radial(corners), clone);
         break;
     }
   }
