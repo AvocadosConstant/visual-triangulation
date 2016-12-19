@@ -16,7 +16,8 @@ The following are useful/relevant commands:
 
 ESC .......... quit the program
 SPACE ........ reset the image
-e ............ export the image
+c ............ compress image, enter positive integer value for region size in stdin
+e ............ export the image after compression
 r ............ generate random points on an image from its edges
 s ............ generate random points on an image with Shi-Tomasi detection
 t ............ triangulate points on image (only run after running 'r' or 's')
