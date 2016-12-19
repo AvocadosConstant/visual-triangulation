@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   }
 
   int size = 0;
-  cv::namedWindow(mainWindowTitle, cv::WINDOW_NORMAL);
+  cv::namedWindow(mainWindowTitle, cv::WINDOW_AUTOSIZE);
 
   std::vector<cv::Point2f> corners;
   std::vector<std::pair<cv::Point2f, cv::Point2f>> lines;
