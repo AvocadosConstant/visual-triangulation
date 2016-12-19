@@ -9,7 +9,9 @@ Must have OpenCV 3+ and g++ version with at least C++11 support.
 Compile the program first by running 'make',
 Then run './gui <0,1> <path-to-image>' where 0 indicates that
 the image should be opened as a grayscale and 1 indicates that the image
-should be opened in color (RGB). For point generation and triangulation, please
+should be opened in color (RGB). 
+
+Important note: For point generation and triangulation, please
 open in the image in grayscale (option 0).
 
 The following are useful/relevant commands:
