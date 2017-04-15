@@ -1,8 +1,12 @@
 # CS 455 Term Project
 
+-----
+
 ## Requirements
 
 Must have OpenCV 3+ and g++ version with at least C++11 support.
+
+-----
 
 ## How to Run
 
@@ -17,17 +21,27 @@ open in the image in grayscale (option 0).
 The following are useful/relevant commands:
 
 ESC .......... quit the program
+
 SPACE ........ reset the image
+
 c ............ compress image, enter positive integer value for region size in stdin
+
 e ............ export the image after compression
+
 r ............ generate random points on an image from its edges
+
 s ............ generate random points on an image with Shi-Tomasi detection
+
 t ............ triangulate points on image (only run after running 'r' or 's')
+
 1 ............ triangulate points on an image from random points of its edges
+
 2 ............ triangulate points on an image from Shi-Tomasi detection points
 
 Note: '1' and '2' are just 'r' and 's' combined with 't'. The difference is that
 '1' and '2' do not produce circles generated from 'r' and 's'.
+
+-----
 
 ## Corner Detection
 
@@ -43,6 +57,8 @@ We will utilize Harris-Stephens and Shi-Tomasi corner detection.
 
 We use radial sweep as the algorithm of choice for generating Delaunay triangulations.
 
+-----
+
 ## Compression
 
 ### Using Triangulation in Compression
@@ -56,8 +72,13 @@ Unlike existing triangulation algorithms, we want to break down our images to co
 ### Future Applications
 
 [x] Compare compression results between grayscale and color.
+
 [x] Test larger images (MB)
+
 [ ] Test even larger images (GB)
+
 [ ] How can we make this procedure more efficient?
+
 [ ] We're consistent with our triangle sizes - can we adjust based on the image's colors and intensities?
-[ ] Can we obscure the image with triangulation to allow for protecting the image contents and only allow for the intended receiving party to unlock it (i.e. restore the image)?
+
+[ ] Can we obscure the image with triangulation to allow for protecting the image contents and only allow for the intended receiving  party to unlock it (i.e. restore the image)?
